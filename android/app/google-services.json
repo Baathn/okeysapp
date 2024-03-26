@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "498335819617",
+    "project_id": "okeys-35f7a",
+    "storage_bucket": "okeys-35f7a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:498335819617:android:3dbc5754c9032c4aaec720",
+        "android_client_info": {
+          "package_name": "com.example.okeys"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDM6UVuaoOvvbfw3Zrd_2OYuld8xAKIIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
