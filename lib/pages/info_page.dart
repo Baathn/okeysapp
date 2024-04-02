@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -36,11 +38,44 @@ class _InfoBodyState extends State<InfoBody> {
   final TextEditingController _dateController = TextEditingController();
   late DateTime _selectedDate;
   AppUser? _selectedAgent;
+  List<String> risks = [];
+  bool isLoading = true;
+  String inseeCode = 'API PAUL';
 
   @override
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
+    fetchRisksData();
+  }
+
+   Future<void> fetchRisksData() async {
+    try {
+      // Remplacez 'YOUR_INSEE_CODE' par votre variable contenant le code INSEE
+      var response = await http.get(Uri.parse(
+          'https://georisques.gouv.fr/api/v1/gaspar/risques?rayon=1000&code_insee=$inseeCode'));
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        if (data.containsKey('data') &&
+            data['data'] is List &&
+            data['data'].isNotEmpty &&
+            data['data'][0].containsKey('risques_detail')) {
+          List<dynamic> risksData = data['data'][0]['risques_detail'];
+          List<String> riskNames = risksData.map((risk) {
+  return utf8.decode(risk['libelle_risque_long'].toString().runes.toList());
+}).toList();
+          setState(() {
+            risks = riskNames;
+            isLoading = false;
+          });
+        }
+      } else {
+        print('Failed to load risks data');
+      }
+    } catch (e) {
+      print('Error fetching risks data: $e');
+    }
   }
 
   void _showAgentSelectionModal(BuildContext context) async {
@@ -229,6 +264,28 @@ class _InfoBodyState extends State<InfoBody> {
                   icon: const Icon(Icons.house),
                   label: const Text("Choisir un agent pour la visite"),
                 ),
+                const Text(
+                  'Risques dans la commune :',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Text(
+                  'Source - api.gouv.fr',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w300),
+                ),
+                const SizedBox(height: 10,),
+                isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: risks
+                            .map(
+                              (risk) => Text(
+                                '- $risk',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            )
+                            .toList(),
+                      ),
               ],
             ),
           ),
