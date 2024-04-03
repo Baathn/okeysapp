@@ -1,8 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Annonce {
   String id;
   String titre;
+  String departement;
+  String ville;
+  String codeDepartement;
+  String codeVille;
   String description;
   String imageUrl;
   double prix;
@@ -14,6 +16,10 @@ class Annonce {
   Annonce({
     required this.id,
     required this.titre,
+    required this.departement,
+    required this.ville,
+    required this.codeDepartement,
+    required this.codeVille,
     required this.description,
     required this.imageUrl,
     required this.prix,
@@ -26,6 +32,10 @@ class Annonce {
   Map<String, dynamic> toJson() => {
         'titre': titre,
         'description': description,
+        'departement': departement,
+        'ville': ville,
+        'codeDepartement': codeDepartement,
+        'codeVille': codeVille,
         'imageUrl': imageUrl,
         'prix': prix,
         'm2': m2,
@@ -37,6 +47,10 @@ class Annonce {
   static Annonce fromJson(Map<String, dynamic> json, String id) => Annonce(
         id: id,
         titre: json['titre'],
+        departement: json['departement'],
+        ville: json['ville'],
+        codeDepartement: json['codeDepartement'],
+        codeVille: json['codeVille'],
         description: json['description'],
         imageUrl: json['imageUrl'],
         prix: json['prix'].toDouble(),
@@ -45,6 +59,4 @@ class Annonce {
         garage: json['garage'],
         fibreOptique: json['fibreOptique'],
       );
-
-  static fromFirestore(QueryDocumentSnapshot<Object?> doc) {}
 }

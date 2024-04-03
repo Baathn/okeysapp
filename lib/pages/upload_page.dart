@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print, library_private_types_in_public_api
 
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:okeys/classes/annonce_class.dart';
 import 'package:path/path.dart' as path;
 import 'package:okeys/services/firebase_services.dart';
+import 'package:http/http.dart' as http;
 
 class UploadPage extends StatefulWidget {
   final Annonce? annonceToEdit;
@@ -28,6 +30,11 @@ class _UploadPageState extends State<UploadPage> {
   bool _fibreOptique = false;
   File? _image;
   final picker = ImagePicker();
+  String? selectedDepartementCode;
+  final TextEditingController _departementController = TextEditingController();
+  final TextEditingController _villeController = TextEditingController();
+  UniqueKey _villeFieldKey = UniqueKey();
+  String? selectedVilleCode;
 
   @override
   void initState() {
@@ -77,6 +84,10 @@ class _UploadPageState extends State<UploadPage> {
       jardin: _jardin,
       garage: _garage,
       fibreOptique: _fibreOptique,
+      departement: _departementController.text,
+      ville: _villeController.text,
+      codeDepartement: selectedDepartementCode ?? "",
+      codeVille: selectedVilleCode ?? "",
     );
 
     if (widget.annonceToEdit == null) {
@@ -88,6 +99,46 @@ class _UploadPageState extends State<UploadPage> {
     }
 
     Navigator.of(context).pop();
+  }
+
+  Future<List<Map<String, String>>> searchDepartements(String query) async {
+    final url =
+        Uri.parse('https://geo.api.gouv.fr/departements?nom=$query&limit=5');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> departements = json.decode(response.body);
+      return departements
+          .map((dep) => {
+                "nom": dep['nom']
+                    as String, // Assure-toi que 'nom' est bien une String
+                "code": dep['code']
+                    as String // Assure-toi que 'code' est bien une String
+              })
+          .toList();
+    } else {
+      throw Exception('Failed to load departements');
+    }
+  }
+
+  Future<List<Map<String, String>>> searchVilles(
+      String departementCode, String query) async {
+    final url = Uri.parse(
+        'https://geo.api.gouv.fr/communes?codeDepartement=$departementCode&nom=$query&limit=5');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List villes = json.decode(response.body);
+      return villes
+          .map((ville) => {
+                "nom": ville['nom'] as String,
+                "code": ville['code']
+                    as String, // Suppose que l'API renvoie un champ 'code'
+              })
+          .toList();
+    } else {
+      throw Exception('Failed to load villes');
+    }
   }
 
   @override
@@ -161,6 +212,54 @@ class _UploadPageState extends State<UploadPage> {
                       return 'Veuillez entrer une surface';
                     }
                     return null;
+                  },
+                ),
+                Autocomplete<Map<String, String>>(
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<Map<String, String>>.empty();
+                    }
+                    return await searchDepartements(textEditingValue.text);
+                  },
+                  displayStringForOption: (Map<String, String> option) =>
+                      option['nom']!,
+                  onSelected: (Map<String, String> selection) {
+                    _departementController.text = selection['nom']!;
+                    selectedDepartementCode = selection['code'];
+                    // Réinitialiser la ville et regénérer la key pour forcer la reconstruction
+                    _villeController.clear();
+                    setState(() {
+                      _villeFieldKey = UniqueKey();
+                    });
+                  },
+                ),
+                Autocomplete<Map<String, String>>(
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                    if (textEditingValue.text == '' ||
+                        selectedDepartementCode == null) {
+                      return const Iterable<Map<String, String>>.empty();
+                    }
+                    return await searchVilles(
+                        selectedDepartementCode!, textEditingValue.text);
+                  },
+                  displayStringForOption: (Map<String, String> option) =>
+                      option['nom']!,
+                  onSelected: (Map<String, String> selection) {
+                    setState(() {
+                      _villeController.text = selection['nom']!;
+                      selectedVilleCode = selection[
+                          'code']; // Stocker le code de la ville sélectionnée
+                    });
+                  },
+                  fieldViewBuilder:
+                      (_, controller, focusNode, onEditingComplete) {
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      onEditingComplete: onEditingComplete,
+                      decoration: const InputDecoration(labelText: 'Ville'),
+                      enabled: selectedDepartementCode != null,
+                    );
                   },
                 ),
                 SwitchListTile(

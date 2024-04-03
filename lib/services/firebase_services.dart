@@ -134,9 +134,9 @@ class FirebaseServices {
     await _firestore.collection('visites').doc(id).delete();
   }
 
-
   Future<AppUser?> getUserById(String id) async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(id).get();
     return doc.exists ? AppUser.fromJson(doc.data()!, doc.id) : null;
   }
 

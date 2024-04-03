@@ -40,7 +40,7 @@ class _InfoBodyState extends State<InfoBody> {
   AppUser? _selectedAgent;
   List<String> risks = [];
   bool isLoading = true;
-  String inseeCode = 'API PAUL';
+  late String inseeCode = widget.annonce.codeVille;
 
   @override
   void initState() {
@@ -274,7 +274,7 @@ class _InfoBodyState extends State<InfoBody> {
                 ),
                 const SizedBox(height: 10,),
                 isLoading
-                    ? Center(child: CircularProgressIndicator())
+                    ? const Center(child: CircularProgressIndicator())
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: risks
